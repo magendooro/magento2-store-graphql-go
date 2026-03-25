@@ -8,6 +8,14 @@ type Query {
   currency: Currency
   cmsPage(id: Int, identifier: String): CmsPage
   cmsBlocks(identifiers: [String]): CmsBlocks
+  """Resolve a store URL to its entity type and routing metadata."""
+  route(url: String!): RoutableInterface
+  """Deprecated: use route instead."""
+  urlResolver(url: String!): EntityUrl
+  """Return reCAPTCHA config for a specific storefront form."""
+  recaptchaFormConfig(formType: ReCaptchaFormEnum!): ReCaptchaConfigOutput
+  """Return reCAPTCHA v3 configuration."""
+  recaptchaV3Config: ReCaptchaConfigurationV3
 }
 
 type Mutation {
@@ -144,7 +152,7 @@ type ExchangeRate {
 
 # ─── CMS ──────────────────────────────────────────────────────────────────────
 
-type CmsPage {
+type CmsPage implements RoutableInterface {
   identifier: String
   url_key: String
   title: String
@@ -154,6 +162,10 @@ type CmsPage {
   meta_title: String
   meta_description: String
   meta_keywords: String
+  # RoutableInterface fields
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
 }
 
 type CmsBlocks {
@@ -177,4 +189,134 @@ input ContactUsInput {
 
 type ContactUsOutput {
   status: Boolean!
+}
+
+# ─── URL Routing ──────────────────────────────────────────────────────────────
+
+interface RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+}
+
+enum UrlRewriteEntityTypeEnum {
+  CMS_PAGE
+  PRODUCT
+  CATEGORY
+}
+
+"""Returned by urlResolver (deprecated). Use route instead."""
+type EntityUrl {
+  id: Int
+  entity_uid: ID
+  canonical_url: String
+  relative_url: String
+  redirect_code: Int
+  type: UrlRewriteEntityTypeEnum
+}
+
+"""Fallback routable type for URLs that don't map to a known entity type."""
+type RoutableUrl implements RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+}
+
+"""Routing stub for simple products. Full data available from catalog service."""
+type SimpleProduct implements RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+}
+
+"""Routing stub for configurable products."""
+type ConfigurableProduct implements RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+}
+
+"""Routing stub for bundle products."""
+type BundleProduct implements RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+}
+
+"""Routing stub for virtual products."""
+type VirtualProduct implements RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+}
+
+"""Routing stub for downloadable products."""
+type DownloadableProduct implements RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+}
+
+"""Routing stub for grouped products."""
+type GroupedProduct implements RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+}
+
+"""Routing stub for categories. Full data available from catalog service."""
+type CategoryTree implements RoutableInterface {
+  relative_url: String
+  redirect_code: Int!
+  type: UrlRewriteEntityTypeEnum
+  uid: ID
+}
+
+# ─── reCAPTCHA ────────────────────────────────────────────────────────────────
+
+enum ReCaptchaFormEnum {
+  PLACE_ORDER
+  CONTACT
+  CUSTOMER_LOGIN
+  CUSTOMER_FORGOT_PASSWORD
+  CUSTOMER_CREATE
+  CUSTOMER_EDIT
+  NEWSLETTER
+  PRODUCT_REVIEW
+  SENDFRIEND
+  BRAINTREE
+  RESEND_CONFIRMATION_EMAIL
+}
+
+enum ReCaptchaTypeEnum {
+  INVISIBLE
+  RECAPTCHA
+  RECAPTCHA_V3
+}
+
+type ReCaptchaConfigOutput {
+  is_enabled: Boolean!
+  configurations: ReCaptchaConfiguration
+}
+
+type ReCaptchaConfiguration {
+  re_captcha_type: ReCaptchaTypeEnum!
+  website_key: String!
+  minimum_score: Float
+  badge_position: String
+  theme: String!
+  language_code: String
+  validation_failure_message: String!
+  technical_failure_message: String!
+}
+
+type ReCaptchaConfigurationV3 {
+  is_enabled: Boolean!
+  website_key: String!
+  minimum_score: Float!
+  badge_position: String!
+  language_code: String
+  failure_message: String!
+  forms: [ReCaptchaFormEnum!]!
+  theme: String!
 }

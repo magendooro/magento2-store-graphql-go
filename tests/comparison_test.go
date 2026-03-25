@@ -244,6 +244,151 @@ func TestCompare_Currency(t *testing.T) {
 	}
 }
 
+// ─── Route Comparison ─────────────────────────────────────────────────────────
+
+func TestCompare_Route_CmsPage(t *testing.T) {
+	query := `{
+		route(url: "home") {
+			relative_url
+			redirect_code
+			type
+			... on CmsPage {
+				identifier
+				title
+			}
+		}
+	}`
+
+	goResp := doQuery(t, query)
+	magentoResp := doMagentoQuery(t, query)
+
+	if len(goResp.Errors) > 0 {
+		t.Fatalf("Go error: %s", goResp.Errors[0].Message)
+	}
+	if len(magentoResp.Errors) > 0 {
+		t.Fatalf("Magento error: %s", magentoResp.Errors[0].Message)
+	}
+
+	type routeShape struct {
+		Route *struct {
+			RelativeURL  *string `json:"relative_url"`
+			RedirectCode int     `json:"redirect_code"`
+			Type         *string `json:"type"`
+			Identifier   *string `json:"identifier"`
+			Title        *string `json:"title"`
+		} `json:"route"`
+	}
+
+	var goData, magentoData routeShape
+	json.Unmarshal(goResp.Data, &goData)
+	json.Unmarshal(magentoResp.Data, &magentoData)
+
+	if goData.Route == nil && magentoData.Route == nil {
+		return
+	}
+	if goData.Route == nil || magentoData.Route == nil {
+		t.Fatalf("route nil mismatch: go=%v magento=%v", goData.Route == nil, magentoData.Route == nil)
+	}
+
+	comparePtr(t, "type", goData.Route.Type, magentoData.Route.Type)
+	if goData.Route.RedirectCode != magentoData.Route.RedirectCode {
+		t.Errorf("redirect_code mismatch: go=%d magento=%d", goData.Route.RedirectCode, magentoData.Route.RedirectCode)
+	}
+	comparePtr(t, "identifier", goData.Route.Identifier, magentoData.Route.Identifier)
+}
+
+func TestCompare_Route_Category(t *testing.T) {
+	query := `{
+		route(url: "gear.html") {
+			relative_url
+			redirect_code
+			type
+		}
+	}`
+
+	goResp := doQuery(t, query)
+	magentoResp := doMagentoQuery(t, query)
+
+	if len(goResp.Errors) > 0 {
+		t.Fatalf("Go error: %s", goResp.Errors[0].Message)
+	}
+	if len(magentoResp.Errors) > 0 {
+		t.Fatalf("Magento error: %s", magentoResp.Errors[0].Message)
+	}
+
+	type routeShape struct {
+		Route *struct {
+			RelativeURL  *string `json:"relative_url"`
+			RedirectCode int     `json:"redirect_code"`
+			Type         *string `json:"type"`
+		} `json:"route"`
+	}
+
+	var goData, magentoData routeShape
+	json.Unmarshal(goResp.Data, &goData)
+	json.Unmarshal(magentoResp.Data, &magentoData)
+
+	if goData.Route == nil && magentoData.Route == nil {
+		return
+	}
+	if goData.Route == nil || magentoData.Route == nil {
+		t.Fatalf("route nil mismatch: go=%v magento=%v", goData.Route == nil, magentoData.Route == nil)
+	}
+
+	comparePtr(t, "type", goData.Route.Type, magentoData.Route.Type)
+	comparePtr(t, "relative_url", goData.Route.RelativeURL, magentoData.Route.RelativeURL)
+	if goData.Route.RedirectCode != magentoData.Route.RedirectCode {
+		t.Errorf("redirect_code mismatch: go=%d magento=%d", goData.Route.RedirectCode, magentoData.Route.RedirectCode)
+	}
+}
+
+// ─── URLResolver Comparison ───────────────────────────────────────────────────
+
+func TestCompare_URLResolver_CmsPage(t *testing.T) {
+	// Note: Magento's EntityUrl does not expose redirect_code — omit it from comparison query.
+	query := `{
+		urlResolver(url: "home") {
+			id
+			type
+			relative_url
+		}
+	}`
+
+	goResp := doQuery(t, query)
+	magentoResp := doMagentoQuery(t, query)
+
+	if len(goResp.Errors) > 0 {
+		t.Fatalf("Go error: %s", goResp.Errors[0].Message)
+	}
+	if len(magentoResp.Errors) > 0 {
+		t.Fatalf("Magento error: %s", magentoResp.Errors[0].Message)
+	}
+
+	type urlResolverShape struct {
+		URLResolver *struct {
+			ID          *int    `json:"id"`
+			Type        *string `json:"type"`
+			RelativeURL *string `json:"relative_url"`
+		} `json:"urlResolver"`
+	}
+
+	var goData, magentoData urlResolverShape
+	json.Unmarshal(goResp.Data, &goData)
+	json.Unmarshal(magentoResp.Data, &magentoData)
+
+	if goData.URLResolver == nil && magentoData.URLResolver == nil {
+		return
+	}
+	if goData.URLResolver == nil || magentoData.URLResolver == nil {
+		t.Fatalf("urlResolver nil mismatch: go=%v magento=%v",
+			goData.URLResolver == nil, magentoData.URLResolver == nil)
+	}
+
+	comparePtr(t, "id", goData.URLResolver.ID, magentoData.URLResolver.ID)
+	comparePtr(t, "type", goData.URLResolver.Type, magentoData.URLResolver.Type)
+	comparePtr(t, "relative_url", goData.URLResolver.RelativeURL, magentoData.URLResolver.RelativeURL)
+}
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 func comparePtr[T comparable](t *testing.T, field string, goVal, magentoVal *T) {

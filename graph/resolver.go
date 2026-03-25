@@ -24,8 +24,9 @@ func NewResolver(db *sql.DB) (*Resolver, error) {
 	countryRepo := repository.NewCountryRepository(db)
 	currencyRepo := repository.NewCurrencyRepository(db)
 	cmsRepo := repository.NewCmsRepository(db)
+	urlRepo := repository.NewUrlRepository(db)
 
-	svc := service.NewStoreService(storeRepo, countryRepo, currencyRepo, cmsRepo, cp)
+	svc := service.NewStoreService(storeRepo, countryRepo, currencyRepo, cmsRepo, urlRepo, cp)
 
 	return &Resolver{Service: svc}, nil
 }

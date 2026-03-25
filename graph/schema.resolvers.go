@@ -100,6 +100,30 @@ func (r *queryResolver) CmsBlocks(ctx context.Context, identifiers []*string) (*
 	return r.Service.GetCmsBlocks(ctx, storeID, ids)
 }
 
+// Route is the resolver for the route field.
+func (r *queryResolver) Route(ctx context.Context, url string) (model.RoutableInterface, error) {
+	storeID := middleware.GetStoreID(ctx)
+	return r.Service.GetRoute(ctx, url, storeID)
+}
+
+// URLResolver is the resolver for the urlResolver field.
+func (r *queryResolver) URLResolver(ctx context.Context, url string) (*model.EntityURL, error) {
+	storeID := middleware.GetStoreID(ctx)
+	return r.Service.GetUrlResolver(ctx, url, storeID)
+}
+
+// RecaptchaFormConfig is the resolver for the recaptchaFormConfig field.
+func (r *queryResolver) RecaptchaFormConfig(ctx context.Context, formType model.ReCaptchaFormEnum) (*model.ReCaptchaConfigOutput, error) {
+	storeID := middleware.GetStoreID(ctx)
+	return r.Service.GetRecaptchaFormConfig(ctx, formType, storeID)
+}
+
+// RecaptchaV3Config is the resolver for the recaptchaV3Config field.
+func (r *queryResolver) RecaptchaV3Config(ctx context.Context) (*model.ReCaptchaConfigurationV3, error) {
+	storeID := middleware.GetStoreID(ctx)
+	return r.Service.GetRecaptchaV3Config(ctx, storeID)
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 

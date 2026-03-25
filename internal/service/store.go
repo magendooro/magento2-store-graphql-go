@@ -19,6 +19,7 @@ type StoreService struct {
 	countryRepo  *repository.CountryRepository
 	currencyRepo *repository.CurrencyRepository
 	cmsRepo      *repository.CmsRepository
+	urlRepo      *repository.UrlRepository
 	cp           *config.ConfigProvider
 }
 
@@ -28,6 +29,7 @@ func NewStoreService(
 	countryRepo *repository.CountryRepository,
 	currencyRepo *repository.CurrencyRepository,
 	cmsRepo *repository.CmsRepository,
+	urlRepo *repository.UrlRepository,
 	cp *config.ConfigProvider,
 ) *StoreService {
 	return &StoreService{
@@ -35,6 +37,7 @@ func NewStoreService(
 		countryRepo:  countryRepo,
 		currencyRepo: currencyRepo,
 		cmsRepo:      cmsRepo,
+		urlRepo:      urlRepo,
 		cp:           cp,
 	}
 }
@@ -310,6 +313,341 @@ func (s *StoreService) GetStoreRow(ctx context.Context, storeID int) (*repositor
 	return s.storeRepo.GetByID(ctx, storeID)
 }
 
+// ─── URL Routing ──────────────────────────────────────────────────────────────
+
+// resolveUrlRewrite implements Magento's AbstractEntityUrl resolution logic:
+// 1. Look up by request_path
+// 2. If not found, try target_path reverse lookup
+// 3. Follow redirect chain to the final destination
+// Returns the final UrlRow, the redirect_code seen along the way, and the
+// relative_url the client should use.
+func (s *StoreService) resolveUrlRewrite(ctx context.Context, rawURL string, storeID int) (
+	final *repository.UrlRow, redirectCode int, relativeURL string, err error,
+) {
+	path := repository.ParseURLPath(rawURL)
+
+	row, err := s.urlRepo.GetByRequestPath(ctx, path, storeID)
+	if err != nil {
+		return nil, 0, "", err
+	}
+	if row == nil {
+		// Reverse lookup: maybe the client sent a canonical target path
+		row, err = s.urlRepo.GetByTargetPath(ctx, path, storeID)
+		if err != nil {
+			return nil, 0, "", err
+		}
+	}
+	if row == nil {
+		return nil, 0, "", nil
+	}
+
+	redirectCode = row.RedirectType
+	relativeURL = row.RequestPath
+
+	// Follow redirect chain (max 10 hops to prevent infinite loops)
+	current := row
+	for i := 0; i < 10 && current.RedirectType != 0; i++ {
+		next, err := s.urlRepo.GetByRequestPath(ctx, current.TargetPath, storeID)
+		if err != nil || next == nil {
+			break
+		}
+		current = next
+	}
+	final = current
+
+	// If the final row has no entity_id, try a target_path reverse lookup
+	if final.EntityID == 0 {
+		if candidate, err := s.urlRepo.GetByTargetPath(ctx, final.TargetPath, storeID); err == nil && candidate != nil {
+			final = candidate
+		}
+	}
+
+	if redirectCode > 0 {
+		relativeURL = current.TargetPath
+	}
+	return final, redirectCode, relativeURL, nil
+}
+
+// GetRoute resolves a URL to a RoutableInterface implementation.
+// For CMS pages the full page content is returned.
+// For products and categories only routing metadata is returned;
+// full entity data should be fetched from the catalog service.
+func (s *StoreService) GetRoute(ctx context.Context, rawURL string, storeID int) (model.RoutableInterface, error) {
+	if strings.TrimSpace(rawURL) == "" {
+		return nil, fmt.Errorf("\"url\" argument should be specified and not empty")
+	}
+
+	final, redirectCode, relativeURL, err := s.resolveUrlRewrite(ctx, rawURL, storeID)
+	if err != nil {
+		return nil, err
+	}
+	if final == nil {
+		return nil, nil
+	}
+
+	typeEnum := urlTypeEnum(final.EntityType)
+
+	switch final.EntityType {
+	case "cms-page":
+		page, err := s.cmsRepo.GetPageByID(ctx, storeID, final.EntityID)
+		if err != nil {
+			return nil, err
+		}
+		if page == nil {
+			return &model.CmsPage{
+				RelativeURL:  &relativeURL,
+				RedirectCode: redirectCode,
+				Type:         typeEnum,
+			}, nil
+		}
+		return cmsPageDataToModel(page, relativeURL, redirectCode, typeEnum), nil
+
+	case "product":
+		typeID, err := s.urlRepo.GetProductTypeID(ctx, final.EntityID)
+		if err != nil {
+			return nil, err
+		}
+		return productRoutable(typeID, relativeURL, redirectCode, typeEnum), nil
+
+	case "category":
+		uid := fmt.Sprintf("%d", final.EntityID)
+		return &model.CategoryTree{
+			RelativeURL:  &relativeURL,
+			RedirectCode: redirectCode,
+			Type:         typeEnum,
+			UID:          &uid,
+		}, nil
+
+	default:
+		return &model.RoutableURL{
+			RelativeURL:  &relativeURL,
+			RedirectCode: redirectCode,
+			Type:         typeEnum,
+		}, nil
+	}
+}
+
+// GetUrlResolver implements the deprecated urlResolver query.
+func (s *StoreService) GetUrlResolver(ctx context.Context, rawURL string, storeID int) (*model.EntityURL, error) {
+	if strings.TrimSpace(rawURL) == "" {
+		return nil, fmt.Errorf("\"url\" argument should be specified and not empty")
+	}
+
+	final, redirectCode, relativeURL, err := s.resolveUrlRewrite(ctx, rawURL, storeID)
+	if err != nil {
+		return nil, err
+	}
+	if final == nil {
+		return nil, nil
+	}
+
+	typeEnum := urlTypeEnum(final.EntityType)
+	uid := fmt.Sprintf("%d", final.EntityID)
+	entityID := final.EntityID
+	return &model.EntityURL{
+		ID:           &entityID,
+		EntityUID:    &uid,
+		CanonicalURL: &relativeURL,
+		RelativeURL:  &relativeURL,
+		RedirectCode: &redirectCode,
+		Type:         typeEnum,
+	}, nil
+}
+
+// cmsPageDataToModel converts a repository CmsPageData row to a model.CmsPage
+// with the RoutableInterface routing fields populated.
+func cmsPageDataToModel(p *repository.CmsPageData, relativeURL string, redirectCode int, t *model.URLRewriteEntityTypeEnum) *model.CmsPage {
+	return &model.CmsPage{
+		Identifier:      strPtrIfNotEmpty(p.Identifier),
+		URLKey:          strPtrIfNotEmpty(p.Identifier), // url_key == identifier in Magento
+		Title:           strPtrIfNotEmpty(p.Title),
+		Content:         strPtrIfNotEmpty(p.Content),
+		ContentHeading:  strPtrIfNotEmpty(p.ContentHeading),
+		PageLayout:      strPtrIfNotEmpty(p.PageLayout),
+		MetaTitle:       strPtrIfNotEmpty(p.MetaTitle),
+		MetaDescription: strPtrIfNotEmpty(p.MetaDescription),
+		MetaKeywords:    strPtrIfNotEmpty(p.MetaKeywords),
+		RelativeURL:     &relativeURL,
+		RedirectCode:    redirectCode,
+		Type:            t,
+	}
+}
+
+// productRoutable maps a Magento product type_id to the correct Go model stub.
+func productRoutable(typeID, relativeURL string, redirectCode int, t *model.URLRewriteEntityTypeEnum) model.RoutableInterface {
+	switch typeID {
+	case "configurable":
+		return &model.ConfigurableProduct{RelativeURL: &relativeURL, RedirectCode: redirectCode, Type: t}
+	case "bundle":
+		return &model.BundleProduct{RelativeURL: &relativeURL, RedirectCode: redirectCode, Type: t}
+	case "virtual":
+		return &model.VirtualProduct{RelativeURL: &relativeURL, RedirectCode: redirectCode, Type: t}
+	case "downloadable":
+		return &model.DownloadableProduct{RelativeURL: &relativeURL, RedirectCode: redirectCode, Type: t}
+	case "grouped":
+		return &model.GroupedProduct{RelativeURL: &relativeURL, RedirectCode: redirectCode, Type: t}
+	default: // "simple" and unknown types
+		return &model.SimpleProduct{RelativeURL: &relativeURL, RedirectCode: redirectCode, Type: t}
+	}
+}
+
+// urlTypeEnum converts a url_rewrite entity_type string to the GraphQL enum pointer.
+func urlTypeEnum(entityType string) *model.URLRewriteEntityTypeEnum {
+	var t model.URLRewriteEntityTypeEnum
+	switch entityType {
+	case "product":
+		t = model.URLRewriteEntityTypeEnumProduct
+	case "category":
+		t = model.URLRewriteEntityTypeEnumCategory
+	case "cms-page":
+		t = model.URLRewriteEntityTypeEnumCmsPage
+	default:
+		return nil
+	}
+	return &t
+}
+
+// ─── reCAPTCHA ────────────────────────────────────────────────────────────────
+
+// formTypeConfigKey maps the ReCaptchaFormEnum to the Magento config key suffix.
+var formTypeConfigKey = map[model.ReCaptchaFormEnum]string{
+	model.ReCaptchaFormEnumPlaceOrder:              "place_order",
+	model.ReCaptchaFormEnumContact:                 "contact",
+	model.ReCaptchaFormEnumCustomerLogin:            "customer_login",
+	model.ReCaptchaFormEnumCustomerForgotPassword:   "customer_forgot_password",
+	model.ReCaptchaFormEnumCustomerCreate:           "customer_create",
+	model.ReCaptchaFormEnumCustomerEdit:             "customer_edit",
+	model.ReCaptchaFormEnumNewsletter:               "newsletter",
+	model.ReCaptchaFormEnumProductReview:            "product_review",
+	model.ReCaptchaFormEnumSendfriend:               "sendfriend",
+	model.ReCaptchaFormEnumBraintree:                "braintree",
+	model.ReCaptchaFormEnumResendConfirmationEmail:  "resend_confirmation_email",
+}
+
+// recaptchaTypeConfigPaths returns the website_key config path for a given recaptcha type string.
+func recaptchaWebsiteKeyPath(captchaType string) string {
+	return captchaType + "/general/public_key"
+}
+
+// recaptchaThemePath returns the theme config path for a captcha type.
+func recaptchaThemePath(captchaType string) string {
+	return captchaType + "/general/theme"
+}
+
+// GetRecaptchaFormConfig returns reCAPTCHA configuration for a specific form.
+func (s *StoreService) GetRecaptchaFormConfig(ctx context.Context, formType model.ReCaptchaFormEnum, storeID int) (*model.ReCaptchaConfigOutput, error) {
+	configKey, ok := formTypeConfigKey[formType]
+	if !ok {
+		disabled := false
+		return &model.ReCaptchaConfigOutput{IsEnabled: disabled}, nil
+	}
+
+	captchaType := s.cp.Get("recaptcha_frontend/type_for/"+configKey, storeID)
+	if captchaType == "" {
+		disabled := false
+		return &model.ReCaptchaConfigOutput{IsEnabled: disabled}, nil
+	}
+
+	websiteKey := s.cp.Get(recaptchaWebsiteKeyPath(captchaType), storeID)
+	theme := s.cp.Get(recaptchaThemePath(captchaType), storeID)
+	if theme == "" {
+		theme = "light"
+	}
+	validationMsg := s.cp.Get("recaptcha_frontend/failure_messages/validation_failure_message", storeID)
+	if validationMsg == "" {
+		validationMsg = "reCAPTCHA verification failed."
+	}
+	technicalMsg := s.cp.Get("recaptcha_frontend/failure_messages/technical_failure_message", storeID)
+	if technicalMsg == "" {
+		technicalMsg = "reCAPTCHA technical problem."
+	}
+	badgePos := s.cp.Get("recaptcha_frontend/invisible/badge_position", storeID)
+	langCode := s.cp.Get("recaptcha_frontend/general/language_code", storeID)
+	minScore := s.cp.GetFloat("recaptcha_v3/score/minimum_score", storeID, 0.5)
+
+	rType := recaptchaTypeEnum(captchaType)
+	config := &model.ReCaptchaConfiguration{
+		ReCaptchaType:            rType,
+		WebsiteKey:               websiteKey,
+		Theme:                    theme,
+		ValidationFailureMessage: validationMsg,
+		TechnicalFailureMessage:  technicalMsg,
+	}
+	if badgePos != "" {
+		config.BadgePosition = &badgePos
+	}
+	if langCode != "" {
+		config.LanguageCode = &langCode
+	}
+	if captchaType == "recaptcha_v3" {
+		config.MinimumScore = &minScore
+	}
+
+	return &model.ReCaptchaConfigOutput{
+		IsEnabled:      true,
+		Configurations: config,
+	}, nil
+}
+
+// GetRecaptchaV3Config returns the reCAPTCHA v3 global configuration.
+func (s *StoreService) GetRecaptchaV3Config(ctx context.Context, storeID int) (*model.ReCaptchaConfigurationV3, error) {
+	const captchaType = "recaptcha_v3"
+
+	websiteKey := s.cp.Get(recaptchaWebsiteKeyPath(captchaType), storeID)
+	theme := s.cp.Get(recaptchaThemePath(captchaType), storeID)
+	if theme == "" {
+		theme = "light"
+	}
+	minScore := s.cp.GetFloat("recaptcha_v3/score/minimum_score", storeID, 0.5)
+	badgePos := s.cp.Get("recaptcha_frontend/invisible/badge_position", storeID)
+	if badgePos == "" {
+		badgePos = "bottomright"
+	}
+	langCode := s.cp.Get("recaptcha_frontend/general/language_code", storeID)
+	failureMsg := s.cp.Get("recaptcha_frontend/failure_messages/validation_failure_message", storeID)
+	if failureMsg == "" {
+		failureMsg = "reCAPTCHA verification failed."
+	}
+
+	// Collect which forms have recaptcha_v3 configured
+	var forms []model.ReCaptchaFormEnum
+	for formEnum, configKey := range formTypeConfigKey {
+		if s.cp.Get("recaptcha_frontend/type_for/"+configKey, storeID) == captchaType {
+			forms = append(forms, formEnum)
+		}
+	}
+
+	// isEnabled requires a private key + website key + at least one form
+	privateKey := s.cp.Get("recaptcha_v3/general/private_key", storeID)
+	isEnabled := privateKey != "" && websiteKey != "" && len(forms) > 0
+
+	result := &model.ReCaptchaConfigurationV3{
+		IsEnabled:    isEnabled,
+		WebsiteKey:   websiteKey,
+		MinimumScore: minScore,
+		BadgePosition: badgePos,
+		FailureMessage: failureMsg,
+		Forms:        forms,
+		Theme:        theme,
+	}
+	if langCode != "" {
+		result.LanguageCode = &langCode
+	}
+	return result, nil
+}
+
+// recaptchaTypeEnum maps a Magento captcha type string to the GraphQL enum.
+func recaptchaTypeEnum(captchaType string) model.ReCaptchaTypeEnum {
+	switch captchaType {
+	case "recaptcha_v2_invisible", "recaptcha_v3":
+		return model.ReCaptchaTypeEnumInvisible
+	case "recaptcha_v2_checkbox":
+		return model.ReCaptchaTypeEnumRecaptcha
+	default:
+		return model.ReCaptchaTypeEnumRecaptchaV3
+	}
+}
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 func strPtr(s string) *string {
@@ -318,6 +656,10 @@ func strPtr(s string) *string {
 	}
 	return &s
 }
+
+// strPtrIfNotEmpty returns a pointer to s, or nil if s is empty.
+// Alias used where strPtr reads ambiguously.
+func strPtrIfNotEmpty(s string) *string { return strPtr(s) }
 
 func parseLocaleTag(locale string) language.Tag {
 	if locale == "" {

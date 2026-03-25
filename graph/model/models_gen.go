@@ -2,6 +2,45 @@
 
 package model
 
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type RoutableInterface interface {
+	IsRoutableInterface()
+	GetRelativeURL() *string
+	GetRedirectCode() int
+	GetType() *URLRewriteEntityTypeEnum
+}
+
+// Routing stub for bundle products.
+type BundleProduct struct {
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode int                       `json:"redirect_code"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+}
+
+func (BundleProduct) IsRoutableInterface()                    {}
+func (this BundleProduct) GetRelativeURL() *string            { return this.RelativeURL }
+func (this BundleProduct) GetRedirectCode() int               { return this.RedirectCode }
+func (this BundleProduct) GetType() *URLRewriteEntityTypeEnum { return this.Type }
+
+// Routing stub for categories. Full data available from catalog service.
+type CategoryTree struct {
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode int                       `json:"redirect_code"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+	UID          *string                   `json:"uid,omitempty"`
+}
+
+func (CategoryTree) IsRoutableInterface()                    {}
+func (this CategoryTree) GetRelativeURL() *string            { return this.RelativeURL }
+func (this CategoryTree) GetRedirectCode() int               { return this.RedirectCode }
+func (this CategoryTree) GetType() *URLRewriteEntityTypeEnum { return this.Type }
+
 type CmsBlock struct {
 	Identifier *string `json:"identifier,omitempty"`
 	Title      *string `json:"title,omitempty"`
@@ -13,16 +52,36 @@ type CmsBlocks struct {
 }
 
 type CmsPage struct {
-	Identifier      *string `json:"identifier,omitempty"`
-	URLKey          *string `json:"url_key,omitempty"`
-	Title           *string `json:"title,omitempty"`
-	Content         *string `json:"content,omitempty"`
-	ContentHeading  *string `json:"content_heading,omitempty"`
-	PageLayout      *string `json:"page_layout,omitempty"`
-	MetaTitle       *string `json:"meta_title,omitempty"`
-	MetaDescription *string `json:"meta_description,omitempty"`
-	MetaKeywords    *string `json:"meta_keywords,omitempty"`
+	Identifier      *string                   `json:"identifier,omitempty"`
+	URLKey          *string                   `json:"url_key,omitempty"`
+	Title           *string                   `json:"title,omitempty"`
+	Content         *string                   `json:"content,omitempty"`
+	ContentHeading  *string                   `json:"content_heading,omitempty"`
+	PageLayout      *string                   `json:"page_layout,omitempty"`
+	MetaTitle       *string                   `json:"meta_title,omitempty"`
+	MetaDescription *string                   `json:"meta_description,omitempty"`
+	MetaKeywords    *string                   `json:"meta_keywords,omitempty"`
+	RelativeURL     *string                   `json:"relative_url,omitempty"`
+	RedirectCode    int                       `json:"redirect_code"`
+	Type            *URLRewriteEntityTypeEnum `json:"type,omitempty"`
 }
+
+func (CmsPage) IsRoutableInterface()                    {}
+func (this CmsPage) GetRelativeURL() *string            { return this.RelativeURL }
+func (this CmsPage) GetRedirectCode() int               { return this.RedirectCode }
+func (this CmsPage) GetType() *URLRewriteEntityTypeEnum { return this.Type }
+
+// Routing stub for configurable products.
+type ConfigurableProduct struct {
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode int                       `json:"redirect_code"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+}
+
+func (ConfigurableProduct) IsRoutableInterface()                    {}
+func (this ConfigurableProduct) GetRelativeURL() *string            { return this.RelativeURL }
+func (this ConfigurableProduct) GetRedirectCode() int               { return this.RedirectCode }
+func (this ConfigurableProduct) GetType() *URLRewriteEntityTypeEnum { return this.Type }
 
 type ContactUsInput struct {
 	Email     string  `json:"email"`
@@ -53,10 +112,44 @@ type Currency struct {
 	ExchangeRates                []*ExchangeRate `json:"exchange_rates,omitempty"`
 }
 
+// Routing stub for downloadable products.
+type DownloadableProduct struct {
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode int                       `json:"redirect_code"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+}
+
+func (DownloadableProduct) IsRoutableInterface()                    {}
+func (this DownloadableProduct) GetRelativeURL() *string            { return this.RelativeURL }
+func (this DownloadableProduct) GetRedirectCode() int               { return this.RedirectCode }
+func (this DownloadableProduct) GetType() *URLRewriteEntityTypeEnum { return this.Type }
+
+// Returned by urlResolver (deprecated). Use route instead.
+type EntityURL struct {
+	ID           *int                      `json:"id,omitempty"`
+	EntityUID    *string                   `json:"entity_uid,omitempty"`
+	CanonicalURL *string                   `json:"canonical_url,omitempty"`
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode *int                      `json:"redirect_code,omitempty"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+}
+
 type ExchangeRate struct {
 	CurrencyTo *string  `json:"currency_to,omitempty"`
 	Rate       *float64 `json:"rate,omitempty"`
 }
+
+// Routing stub for grouped products.
+type GroupedProduct struct {
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode int                       `json:"redirect_code"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+}
+
+func (GroupedProduct) IsRoutableInterface()                    {}
+func (this GroupedProduct) GetRelativeURL() *string            { return this.RelativeURL }
+func (this GroupedProduct) GetRedirectCode() int               { return this.RedirectCode }
+func (this GroupedProduct) GetType() *URLRewriteEntityTypeEnum { return this.Type }
 
 type Mutation struct {
 }
@@ -64,11 +157,62 @@ type Mutation struct {
 type Query struct {
 }
 
+type ReCaptchaConfigOutput struct {
+	IsEnabled      bool                    `json:"is_enabled"`
+	Configurations *ReCaptchaConfiguration `json:"configurations,omitempty"`
+}
+
+type ReCaptchaConfiguration struct {
+	ReCaptchaType            ReCaptchaTypeEnum `json:"re_captcha_type"`
+	WebsiteKey               string            `json:"website_key"`
+	MinimumScore             *float64          `json:"minimum_score,omitempty"`
+	BadgePosition            *string           `json:"badge_position,omitempty"`
+	Theme                    string            `json:"theme"`
+	LanguageCode             *string           `json:"language_code,omitempty"`
+	ValidationFailureMessage string            `json:"validation_failure_message"`
+	TechnicalFailureMessage  string            `json:"technical_failure_message"`
+}
+
+type ReCaptchaConfigurationV3 struct {
+	IsEnabled      bool                `json:"is_enabled"`
+	WebsiteKey     string              `json:"website_key"`
+	MinimumScore   float64             `json:"minimum_score"`
+	BadgePosition  string              `json:"badge_position"`
+	LanguageCode   *string             `json:"language_code,omitempty"`
+	FailureMessage string              `json:"failure_message"`
+	Forms          []ReCaptchaFormEnum `json:"forms"`
+	Theme          string              `json:"theme"`
+}
+
 type Region struct {
 	ID   *int    `json:"id,omitempty"`
 	Code *string `json:"code,omitempty"`
 	Name *string `json:"name,omitempty"`
 }
+
+// Fallback routable type for URLs that don't map to a known entity type.
+type RoutableURL struct {
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode int                       `json:"redirect_code"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+}
+
+func (RoutableURL) IsRoutableInterface()                    {}
+func (this RoutableURL) GetRelativeURL() *string            { return this.RelativeURL }
+func (this RoutableURL) GetRedirectCode() int               { return this.RedirectCode }
+func (this RoutableURL) GetType() *URLRewriteEntityTypeEnum { return this.Type }
+
+// Routing stub for simple products. Full data available from catalog service.
+type SimpleProduct struct {
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode int                       `json:"redirect_code"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+}
+
+func (SimpleProduct) IsRoutableInterface()                    {}
+func (this SimpleProduct) GetRelativeURL() *string            { return this.RelativeURL }
+func (this SimpleProduct) GetRedirectCode() int               { return this.RedirectCode }
+func (this SimpleProduct) GetType() *URLRewriteEntityTypeEnum { return this.Type }
 
 type StoreConfig struct {
 	ID                             *int    `json:"id,omitempty"`
@@ -142,4 +286,203 @@ type StoreConfig struct {
 	AutocompleteOnStorefront       *bool   `json:"autocomplete_on_storefront,omitempty"`
 	CreateAccountConfirmation      *bool   `json:"create_account_confirmation,omitempty"`
 	ContactEnabled                 bool    `json:"contact_enabled"`
+}
+
+// Routing stub for virtual products.
+type VirtualProduct struct {
+	RelativeURL  *string                   `json:"relative_url,omitempty"`
+	RedirectCode int                       `json:"redirect_code"`
+	Type         *URLRewriteEntityTypeEnum `json:"type,omitempty"`
+}
+
+func (VirtualProduct) IsRoutableInterface()                    {}
+func (this VirtualProduct) GetRelativeURL() *string            { return this.RelativeURL }
+func (this VirtualProduct) GetRedirectCode() int               { return this.RedirectCode }
+func (this VirtualProduct) GetType() *URLRewriteEntityTypeEnum { return this.Type }
+
+type ReCaptchaFormEnum string
+
+const (
+	ReCaptchaFormEnumPlaceOrder              ReCaptchaFormEnum = "PLACE_ORDER"
+	ReCaptchaFormEnumContact                 ReCaptchaFormEnum = "CONTACT"
+	ReCaptchaFormEnumCustomerLogin           ReCaptchaFormEnum = "CUSTOMER_LOGIN"
+	ReCaptchaFormEnumCustomerForgotPassword  ReCaptchaFormEnum = "CUSTOMER_FORGOT_PASSWORD"
+	ReCaptchaFormEnumCustomerCreate          ReCaptchaFormEnum = "CUSTOMER_CREATE"
+	ReCaptchaFormEnumCustomerEdit            ReCaptchaFormEnum = "CUSTOMER_EDIT"
+	ReCaptchaFormEnumNewsletter              ReCaptchaFormEnum = "NEWSLETTER"
+	ReCaptchaFormEnumProductReview           ReCaptchaFormEnum = "PRODUCT_REVIEW"
+	ReCaptchaFormEnumSendfriend              ReCaptchaFormEnum = "SENDFRIEND"
+	ReCaptchaFormEnumBraintree               ReCaptchaFormEnum = "BRAINTREE"
+	ReCaptchaFormEnumResendConfirmationEmail ReCaptchaFormEnum = "RESEND_CONFIRMATION_EMAIL"
+)
+
+var AllReCaptchaFormEnum = []ReCaptchaFormEnum{
+	ReCaptchaFormEnumPlaceOrder,
+	ReCaptchaFormEnumContact,
+	ReCaptchaFormEnumCustomerLogin,
+	ReCaptchaFormEnumCustomerForgotPassword,
+	ReCaptchaFormEnumCustomerCreate,
+	ReCaptchaFormEnumCustomerEdit,
+	ReCaptchaFormEnumNewsletter,
+	ReCaptchaFormEnumProductReview,
+	ReCaptchaFormEnumSendfriend,
+	ReCaptchaFormEnumBraintree,
+	ReCaptchaFormEnumResendConfirmationEmail,
+}
+
+func (e ReCaptchaFormEnum) IsValid() bool {
+	switch e {
+	case ReCaptchaFormEnumPlaceOrder, ReCaptchaFormEnumContact, ReCaptchaFormEnumCustomerLogin, ReCaptchaFormEnumCustomerForgotPassword, ReCaptchaFormEnumCustomerCreate, ReCaptchaFormEnumCustomerEdit, ReCaptchaFormEnumNewsletter, ReCaptchaFormEnumProductReview, ReCaptchaFormEnumSendfriend, ReCaptchaFormEnumBraintree, ReCaptchaFormEnumResendConfirmationEmail:
+		return true
+	}
+	return false
+}
+
+func (e ReCaptchaFormEnum) String() string {
+	return string(e)
+}
+
+func (e *ReCaptchaFormEnum) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ReCaptchaFormEnum(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ReCaptchaFormEnum", str)
+	}
+	return nil
+}
+
+func (e ReCaptchaFormEnum) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReCaptchaFormEnum) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReCaptchaFormEnum) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ReCaptchaTypeEnum string
+
+const (
+	ReCaptchaTypeEnumInvisible   ReCaptchaTypeEnum = "INVISIBLE"
+	ReCaptchaTypeEnumRecaptcha   ReCaptchaTypeEnum = "RECAPTCHA"
+	ReCaptchaTypeEnumRecaptchaV3 ReCaptchaTypeEnum = "RECAPTCHA_V3"
+)
+
+var AllReCaptchaTypeEnum = []ReCaptchaTypeEnum{
+	ReCaptchaTypeEnumInvisible,
+	ReCaptchaTypeEnumRecaptcha,
+	ReCaptchaTypeEnumRecaptchaV3,
+}
+
+func (e ReCaptchaTypeEnum) IsValid() bool {
+	switch e {
+	case ReCaptchaTypeEnumInvisible, ReCaptchaTypeEnumRecaptcha, ReCaptchaTypeEnumRecaptchaV3:
+		return true
+	}
+	return false
+}
+
+func (e ReCaptchaTypeEnum) String() string {
+	return string(e)
+}
+
+func (e *ReCaptchaTypeEnum) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ReCaptchaTypeEnum(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ReCaptchaTypeEnum", str)
+	}
+	return nil
+}
+
+func (e ReCaptchaTypeEnum) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReCaptchaTypeEnum) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReCaptchaTypeEnum) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type URLRewriteEntityTypeEnum string
+
+const (
+	URLRewriteEntityTypeEnumCmsPage  URLRewriteEntityTypeEnum = "CMS_PAGE"
+	URLRewriteEntityTypeEnumProduct  URLRewriteEntityTypeEnum = "PRODUCT"
+	URLRewriteEntityTypeEnumCategory URLRewriteEntityTypeEnum = "CATEGORY"
+)
+
+var AllURLRewriteEntityTypeEnum = []URLRewriteEntityTypeEnum{
+	URLRewriteEntityTypeEnumCmsPage,
+	URLRewriteEntityTypeEnumProduct,
+	URLRewriteEntityTypeEnumCategory,
+}
+
+func (e URLRewriteEntityTypeEnum) IsValid() bool {
+	switch e {
+	case URLRewriteEntityTypeEnumCmsPage, URLRewriteEntityTypeEnumProduct, URLRewriteEntityTypeEnumCategory:
+		return true
+	}
+	return false
+}
+
+func (e URLRewriteEntityTypeEnum) String() string {
+	return string(e)
+}
+
+func (e *URLRewriteEntityTypeEnum) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = URLRewriteEntityTypeEnum(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UrlRewriteEntityTypeEnum", str)
+	}
+	return nil
+}
+
+func (e URLRewriteEntityTypeEnum) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *URLRewriteEntityTypeEnum) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e URLRewriteEntityTypeEnum) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

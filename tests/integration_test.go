@@ -490,6 +490,309 @@ func TestPage_Cms_UnknownIdentifier(t *testing.T) {
 	}
 }
 
+// ─── route ───────────────────────────────────────────────────────────────────
+
+func TestRoute_CmsPage_Home(t *testing.T) {
+	resp := doQuery(t, `{
+		route(url: "home") {
+			relative_url
+			redirect_code
+			type
+			... on CmsPage {
+				identifier
+				title
+			}
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		Route *struct {
+			RelativeURL  *string `json:"relative_url"`
+			RedirectCode int     `json:"redirect_code"`
+			Type         *string `json:"type"`
+			Identifier   *string `json:"identifier"`
+			Title        *string `json:"title"`
+		} `json:"route"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.Route == nil {
+		t.Fatal("route returned null for 'home'")
+	}
+	if data.Route.Type == nil || *data.Route.Type != "CMS_PAGE" {
+		t.Errorf("expected type CMS_PAGE, got %v", data.Route.Type)
+	}
+	if data.Route.RedirectCode != 0 {
+		t.Errorf("expected redirect_code 0, got %d", data.Route.RedirectCode)
+	}
+	if data.Route.Identifier == nil || *data.Route.Identifier == "" {
+		t.Error("CmsPage identifier is empty")
+	}
+}
+
+func TestRoute_Category(t *testing.T) {
+	resp := doQuery(t, `{
+		route(url: "gear.html") {
+			relative_url
+			redirect_code
+			type
+			... on CategoryTree {
+				uid
+			}
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		Route *struct {
+			RelativeURL  *string `json:"relative_url"`
+			RedirectCode int     `json:"redirect_code"`
+			Type         *string `json:"type"`
+			UID          *string `json:"uid"`
+		} `json:"route"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.Route == nil {
+		t.Fatal("route returned null for 'gear.html'")
+	}
+	if data.Route.Type == nil || *data.Route.Type != "CATEGORY" {
+		t.Errorf("expected type CATEGORY, got %v", data.Route.Type)
+	}
+}
+
+func TestRoute_SimpleProduct(t *testing.T) {
+	resp := doQuery(t, `{
+		route(url: "joust-duffle-bag.html") {
+			relative_url
+			redirect_code
+			type
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		Route *struct {
+			RelativeURL  *string `json:"relative_url"`
+			RedirectCode int     `json:"redirect_code"`
+			Type         *string `json:"type"`
+		} `json:"route"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.Route == nil {
+		t.Fatal("route returned null for simple product URL")
+	}
+	if data.Route.Type == nil || *data.Route.Type != "PRODUCT" {
+		t.Errorf("expected type PRODUCT, got %v", data.Route.Type)
+	}
+	if data.Route.RedirectCode != 0 {
+		t.Errorf("expected redirect_code 0, got %d", data.Route.RedirectCode)
+	}
+}
+
+func TestRoute_ConfigurableProduct(t *testing.T) {
+	resp := doQuery(t, `{
+		route(url: "chaz-kangeroo-hoodie.html") {
+			relative_url
+			redirect_code
+			type
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		Route *struct {
+			Type *string `json:"type"`
+		} `json:"route"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.Route == nil {
+		t.Fatal("route returned null for configurable product URL")
+	}
+	if data.Route.Type == nil || *data.Route.Type != "PRODUCT" {
+		t.Errorf("expected type PRODUCT, got %v", data.Route.Type)
+	}
+}
+
+func TestRoute_NotFound_ReturnsNull(t *testing.T) {
+	resp := doQuery(t, `{
+		route(url: "__nonexistent_url_xyz__.html") {
+			relative_url
+			type
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		Route *struct {
+			RelativeURL *string `json:"relative_url"`
+		} `json:"route"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.Route != nil {
+		t.Errorf("expected null for unknown URL, got %+v", data.Route)
+	}
+}
+
+// ─── urlResolver ─────────────────────────────────────────────────────────────
+
+func TestURLResolver_CmsPage(t *testing.T) {
+	resp := doQuery(t, `{
+		urlResolver(url: "home") {
+			id
+			type
+			relative_url
+			redirect_code
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		URLResolver *struct {
+			ID           *int    `json:"id"`
+			Type         *string `json:"type"`
+			RelativeURL  *string `json:"relative_url"`
+			RedirectCode *int    `json:"redirect_code"`
+		} `json:"urlResolver"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.URLResolver == nil {
+		t.Fatal("urlResolver returned null for 'home'")
+	}
+	if data.URLResolver.Type == nil || *data.URLResolver.Type != "CMS_PAGE" {
+		t.Errorf("expected type CMS_PAGE, got %v", data.URLResolver.Type)
+	}
+	if data.URLResolver.ID == nil || *data.URLResolver.ID == 0 {
+		t.Error("urlResolver.id is nil or 0")
+	}
+}
+
+func TestURLResolver_NotFound_ReturnsNull(t *testing.T) {
+	resp := doQuery(t, `{
+		urlResolver(url: "__nonexistent_xyz__.html") {
+			id
+			type
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		URLResolver *struct {
+			ID *int `json:"id"`
+		} `json:"urlResolver"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.URLResolver != nil {
+		t.Errorf("expected null for unknown URL, got %+v", data.URLResolver)
+	}
+}
+
+// ─── recaptchaFormConfig ──────────────────────────────────────────────────────
+
+func TestRecaptchaFormConfig_ReturnsResult(t *testing.T) {
+	resp := doQuery(t, `{
+		recaptchaFormConfig(formType: CONTACT) {
+			is_enabled
+			configurations {
+				re_captcha_type
+				website_key
+				theme
+				validation_failure_message
+				technical_failure_message
+			}
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		RecaptchaFormConfig *struct {
+			IsEnabled      bool `json:"is_enabled"`
+			Configurations *struct {
+				ReCaptchaType string `json:"re_captcha_type"`
+				WebsiteKey    string `json:"website_key"`
+				Theme         string `json:"theme"`
+			} `json:"configurations"`
+		} `json:"recaptchaFormConfig"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.RecaptchaFormConfig == nil {
+		t.Fatal("recaptchaFormConfig returned null")
+	}
+	// If enabled, configurations must be present
+	if data.RecaptchaFormConfig.IsEnabled && data.RecaptchaFormConfig.Configurations == nil {
+		t.Error("recaptchaFormConfig is_enabled=true but configurations is null")
+	}
+}
+
+// ─── recaptchaV3Config ────────────────────────────────────────────────────────
+
+func TestRecaptchaV3Config_ReturnsResult(t *testing.T) {
+	resp := doQuery(t, `{
+		recaptchaV3Config {
+			is_enabled
+			website_key
+			minimum_score
+			badge_position
+			failure_message
+			theme
+			forms
+		}
+	}`)
+	if len(resp.Errors) > 0 {
+		t.Fatalf("unexpected error: %s", resp.Errors[0].Message)
+	}
+
+	var data struct {
+		RecaptchaV3Config *struct {
+			IsEnabled    bool     `json:"is_enabled"`
+			WebsiteKey   string   `json:"website_key"`
+			Theme        string   `json:"theme"`
+			Forms        []string `json:"forms"`
+		} `json:"recaptchaV3Config"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if data.RecaptchaV3Config == nil {
+		t.Fatal("recaptchaV3Config returned null")
+	}
+	// theme must always be set (has default)
+	if data.RecaptchaV3Config.Theme == "" {
+		t.Error("recaptchaV3Config.theme is empty")
+	}
+}
+
 // ─── contactUs ───────────────────────────────────────────────────────────────
 
 // contactUsFormEnabled checks whether the contact form is enabled in the DB.

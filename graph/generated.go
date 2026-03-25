@@ -36,6 +36,19 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	BundleProduct struct {
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
+	}
+
+	CategoryTree struct {
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
+		UID          func(childComplexity int) int
+	}
+
 	CmsBlock struct {
 		Content    func(childComplexity int) int
 		Identifier func(childComplexity int) int
@@ -54,8 +67,17 @@ type ComplexityRoot struct {
 		MetaKeywords    func(childComplexity int) int
 		MetaTitle       func(childComplexity int) int
 		PageLayout      func(childComplexity int) int
+		RedirectCode    func(childComplexity int) int
+		RelativeURL     func(childComplexity int) int
 		Title           func(childComplexity int) int
+		Type            func(childComplexity int) int
 		URLKey          func(childComplexity int) int
+	}
+
+	ConfigurableProduct struct {
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
 	}
 
 	ContactUsOutput struct {
@@ -80,9 +102,30 @@ type ComplexityRoot struct {
 		ExchangeRates                func(childComplexity int) int
 	}
 
+	DownloadableProduct struct {
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
+	}
+
+	EntityUrl struct {
+		CanonicalURL func(childComplexity int) int
+		EntityUID    func(childComplexity int) int
+		ID           func(childComplexity int) int
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
+	}
+
 	ExchangeRate struct {
 		CurrencyTo func(childComplexity int) int
 		Rate       func(childComplexity int) int
+	}
+
+	GroupedProduct struct {
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -90,19 +133,62 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		AvailableStores func(childComplexity int, useCurrentGroup *bool) int
-		CmsBlocks       func(childComplexity int, identifiers []*string) int
-		CmsPage         func(childComplexity int, id *int, identifier *string) int
-		Countries       func(childComplexity int) int
-		Country         func(childComplexity int, id *string) int
-		Currency        func(childComplexity int) int
-		StoreConfig     func(childComplexity int) int
+		AvailableStores     func(childComplexity int, useCurrentGroup *bool) int
+		CmsBlocks           func(childComplexity int, identifiers []*string) int
+		CmsPage             func(childComplexity int, id *int, identifier *string) int
+		Countries           func(childComplexity int) int
+		Country             func(childComplexity int, id *string) int
+		Currency            func(childComplexity int) int
+		RecaptchaFormConfig func(childComplexity int, formType model.ReCaptchaFormEnum) int
+		RecaptchaV3Config   func(childComplexity int) int
+		Route               func(childComplexity int, url string) int
+		StoreConfig         func(childComplexity int) int
+		URLResolver         func(childComplexity int, url string) int
+	}
+
+	ReCaptchaConfigOutput struct {
+		Configurations func(childComplexity int) int
+		IsEnabled      func(childComplexity int) int
+	}
+
+	ReCaptchaConfiguration struct {
+		BadgePosition            func(childComplexity int) int
+		LanguageCode             func(childComplexity int) int
+		MinimumScore             func(childComplexity int) int
+		ReCaptchaType            func(childComplexity int) int
+		TechnicalFailureMessage  func(childComplexity int) int
+		Theme                    func(childComplexity int) int
+		ValidationFailureMessage func(childComplexity int) int
+		WebsiteKey               func(childComplexity int) int
+	}
+
+	ReCaptchaConfigurationV3 struct {
+		BadgePosition  func(childComplexity int) int
+		FailureMessage func(childComplexity int) int
+		Forms          func(childComplexity int) int
+		IsEnabled      func(childComplexity int) int
+		LanguageCode   func(childComplexity int) int
+		MinimumScore   func(childComplexity int) int
+		Theme          func(childComplexity int) int
+		WebsiteKey     func(childComplexity int) int
 	}
 
 	Region struct {
 		Code func(childComplexity int) int
 		ID   func(childComplexity int) int
 		Name func(childComplexity int) int
+	}
+
+	RoutableUrl struct {
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
+	}
+
+	SimpleProduct struct {
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
 	}
 
 	StoreConfig struct {
@@ -178,6 +264,12 @@ type ComplexityRoot struct {
 		WeightUnit                     func(childComplexity int) int
 		Welcome                        func(childComplexity int) int
 	}
+
+	VirtualProduct struct {
+		RedirectCode func(childComplexity int) int
+		RelativeURL  func(childComplexity int) int
+		Type         func(childComplexity int) int
+	}
 }
 
 type MutationResolver interface {
@@ -191,6 +283,10 @@ type QueryResolver interface {
 	Currency(ctx context.Context) (*model.Currency, error)
 	CmsPage(ctx context.Context, id *int, identifier *string) (*model.CmsPage, error)
 	CmsBlocks(ctx context.Context, identifiers []*string) (*model.CmsBlocks, error)
+	Route(ctx context.Context, url string) (model.RoutableInterface, error)
+	URLResolver(ctx context.Context, url string) (*model.EntityURL, error)
+	RecaptchaFormConfig(ctx context.Context, formType model.ReCaptchaFormEnum) (*model.ReCaptchaConfigOutput, error)
+	RecaptchaV3Config(ctx context.Context) (*model.ReCaptchaConfigurationV3, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -206,6 +302,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "BundleProduct.redirect_code":
+		if e.ComplexityRoot.BundleProduct.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BundleProduct.RedirectCode(childComplexity), true
+	case "BundleProduct.relative_url":
+		if e.ComplexityRoot.BundleProduct.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BundleProduct.RelativeURL(childComplexity), true
+	case "BundleProduct.type":
+		if e.ComplexityRoot.BundleProduct.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BundleProduct.Type(childComplexity), true
+
+	case "CategoryTree.redirect_code":
+		if e.ComplexityRoot.CategoryTree.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CategoryTree.RedirectCode(childComplexity), true
+	case "CategoryTree.relative_url":
+		if e.ComplexityRoot.CategoryTree.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CategoryTree.RelativeURL(childComplexity), true
+	case "CategoryTree.type":
+		if e.ComplexityRoot.CategoryTree.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CategoryTree.Type(childComplexity), true
+	case "CategoryTree.uid":
+		if e.ComplexityRoot.CategoryTree.UID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CategoryTree.UID(childComplexity), true
 
 	case "CmsBlock.content":
 		if e.ComplexityRoot.CmsBlock.Content == nil {
@@ -275,18 +415,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CmsPage.PageLayout(childComplexity), true
+	case "CmsPage.redirect_code":
+		if e.ComplexityRoot.CmsPage.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CmsPage.RedirectCode(childComplexity), true
+	case "CmsPage.relative_url":
+		if e.ComplexityRoot.CmsPage.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CmsPage.RelativeURL(childComplexity), true
 	case "CmsPage.title":
 		if e.ComplexityRoot.CmsPage.Title == nil {
 			break
 		}
 
 		return e.ComplexityRoot.CmsPage.Title(childComplexity), true
+	case "CmsPage.type":
+		if e.ComplexityRoot.CmsPage.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CmsPage.Type(childComplexity), true
 	case "CmsPage.url_key":
 		if e.ComplexityRoot.CmsPage.URLKey == nil {
 			break
 		}
 
 		return e.ComplexityRoot.CmsPage.URLKey(childComplexity), true
+
+	case "ConfigurableProduct.redirect_code":
+		if e.ComplexityRoot.ConfigurableProduct.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ConfigurableProduct.RedirectCode(childComplexity), true
+	case "ConfigurableProduct.relative_url":
+		if e.ComplexityRoot.ConfigurableProduct.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ConfigurableProduct.RelativeURL(childComplexity), true
+	case "ConfigurableProduct.type":
+		if e.ComplexityRoot.ConfigurableProduct.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ConfigurableProduct.Type(childComplexity), true
 
 	case "ContactUsOutput.status":
 		if e.ComplexityRoot.ContactUsOutput.Status == nil {
@@ -369,6 +546,62 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Currency.ExchangeRates(childComplexity), true
 
+	case "DownloadableProduct.redirect_code":
+		if e.ComplexityRoot.DownloadableProduct.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DownloadableProduct.RedirectCode(childComplexity), true
+	case "DownloadableProduct.relative_url":
+		if e.ComplexityRoot.DownloadableProduct.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DownloadableProduct.RelativeURL(childComplexity), true
+	case "DownloadableProduct.type":
+		if e.ComplexityRoot.DownloadableProduct.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DownloadableProduct.Type(childComplexity), true
+
+	case "EntityUrl.canonical_url":
+		if e.ComplexityRoot.EntityUrl.CanonicalURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EntityUrl.CanonicalURL(childComplexity), true
+	case "EntityUrl.entity_uid":
+		if e.ComplexityRoot.EntityUrl.EntityUID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EntityUrl.EntityUID(childComplexity), true
+	case "EntityUrl.id":
+		if e.ComplexityRoot.EntityUrl.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EntityUrl.ID(childComplexity), true
+	case "EntityUrl.redirect_code":
+		if e.ComplexityRoot.EntityUrl.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EntityUrl.RedirectCode(childComplexity), true
+	case "EntityUrl.relative_url":
+		if e.ComplexityRoot.EntityUrl.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EntityUrl.RelativeURL(childComplexity), true
+	case "EntityUrl.type":
+		if e.ComplexityRoot.EntityUrl.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EntityUrl.Type(childComplexity), true
+
 	case "ExchangeRate.currency_to":
 		if e.ComplexityRoot.ExchangeRate.CurrencyTo == nil {
 			break
@@ -381,6 +614,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ExchangeRate.Rate(childComplexity), true
+
+	case "GroupedProduct.redirect_code":
+		if e.ComplexityRoot.GroupedProduct.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GroupedProduct.RedirectCode(childComplexity), true
+	case "GroupedProduct.relative_url":
+		if e.ComplexityRoot.GroupedProduct.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GroupedProduct.RelativeURL(childComplexity), true
+	case "GroupedProduct.type":
+		if e.ComplexityRoot.GroupedProduct.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.GroupedProduct.Type(childComplexity), true
 
 	case "Mutation.contactUs":
 		if e.ComplexityRoot.Mutation.ContactUs == nil {
@@ -451,12 +703,162 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.Currency(childComplexity), true
 
+	case "Query.recaptchaFormConfig":
+		if e.ComplexityRoot.Query.RecaptchaFormConfig == nil {
+			break
+		}
+
+		args, err := ec.field_Query_recaptchaFormConfig_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RecaptchaFormConfig(childComplexity, args["formType"].(model.ReCaptchaFormEnum)), true
+	case "Query.recaptchaV3Config":
+		if e.ComplexityRoot.Query.RecaptchaV3Config == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.RecaptchaV3Config(childComplexity), true
+	case "Query.route":
+		if e.ComplexityRoot.Query.Route == nil {
+			break
+		}
+
+		args, err := ec.field_Query_route_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Route(childComplexity, args["url"].(string)), true
 	case "Query.storeConfig":
 		if e.ComplexityRoot.Query.StoreConfig == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Query.StoreConfig(childComplexity), true
+	case "Query.urlResolver":
+		if e.ComplexityRoot.Query.URLResolver == nil {
+			break
+		}
+
+		args, err := ec.field_Query_urlResolver_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.URLResolver(childComplexity, args["url"].(string)), true
+
+	case "ReCaptchaConfigOutput.configurations":
+		if e.ComplexityRoot.ReCaptchaConfigOutput.Configurations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigOutput.Configurations(childComplexity), true
+	case "ReCaptchaConfigOutput.is_enabled":
+		if e.ComplexityRoot.ReCaptchaConfigOutput.IsEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigOutput.IsEnabled(childComplexity), true
+
+	case "ReCaptchaConfiguration.badge_position":
+		if e.ComplexityRoot.ReCaptchaConfiguration.BadgePosition == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfiguration.BadgePosition(childComplexity), true
+	case "ReCaptchaConfiguration.language_code":
+		if e.ComplexityRoot.ReCaptchaConfiguration.LanguageCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfiguration.LanguageCode(childComplexity), true
+	case "ReCaptchaConfiguration.minimum_score":
+		if e.ComplexityRoot.ReCaptchaConfiguration.MinimumScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfiguration.MinimumScore(childComplexity), true
+	case "ReCaptchaConfiguration.re_captcha_type":
+		if e.ComplexityRoot.ReCaptchaConfiguration.ReCaptchaType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfiguration.ReCaptchaType(childComplexity), true
+	case "ReCaptchaConfiguration.technical_failure_message":
+		if e.ComplexityRoot.ReCaptchaConfiguration.TechnicalFailureMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfiguration.TechnicalFailureMessage(childComplexity), true
+	case "ReCaptchaConfiguration.theme":
+		if e.ComplexityRoot.ReCaptchaConfiguration.Theme == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfiguration.Theme(childComplexity), true
+	case "ReCaptchaConfiguration.validation_failure_message":
+		if e.ComplexityRoot.ReCaptchaConfiguration.ValidationFailureMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfiguration.ValidationFailureMessage(childComplexity), true
+	case "ReCaptchaConfiguration.website_key":
+		if e.ComplexityRoot.ReCaptchaConfiguration.WebsiteKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfiguration.WebsiteKey(childComplexity), true
+
+	case "ReCaptchaConfigurationV3.badge_position":
+		if e.ComplexityRoot.ReCaptchaConfigurationV3.BadgePosition == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigurationV3.BadgePosition(childComplexity), true
+	case "ReCaptchaConfigurationV3.failure_message":
+		if e.ComplexityRoot.ReCaptchaConfigurationV3.FailureMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigurationV3.FailureMessage(childComplexity), true
+	case "ReCaptchaConfigurationV3.forms":
+		if e.ComplexityRoot.ReCaptchaConfigurationV3.Forms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigurationV3.Forms(childComplexity), true
+	case "ReCaptchaConfigurationV3.is_enabled":
+		if e.ComplexityRoot.ReCaptchaConfigurationV3.IsEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigurationV3.IsEnabled(childComplexity), true
+	case "ReCaptchaConfigurationV3.language_code":
+		if e.ComplexityRoot.ReCaptchaConfigurationV3.LanguageCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigurationV3.LanguageCode(childComplexity), true
+	case "ReCaptchaConfigurationV3.minimum_score":
+		if e.ComplexityRoot.ReCaptchaConfigurationV3.MinimumScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigurationV3.MinimumScore(childComplexity), true
+	case "ReCaptchaConfigurationV3.theme":
+		if e.ComplexityRoot.ReCaptchaConfigurationV3.Theme == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigurationV3.Theme(childComplexity), true
+	case "ReCaptchaConfigurationV3.website_key":
+		if e.ComplexityRoot.ReCaptchaConfigurationV3.WebsiteKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReCaptchaConfigurationV3.WebsiteKey(childComplexity), true
 
 	case "Region.code":
 		if e.ComplexityRoot.Region.Code == nil {
@@ -476,6 +878,44 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Region.Name(childComplexity), true
+
+	case "RoutableUrl.redirect_code":
+		if e.ComplexityRoot.RoutableUrl.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutableUrl.RedirectCode(childComplexity), true
+	case "RoutableUrl.relative_url":
+		if e.ComplexityRoot.RoutableUrl.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutableUrl.RelativeURL(childComplexity), true
+	case "RoutableUrl.type":
+		if e.ComplexityRoot.RoutableUrl.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutableUrl.Type(childComplexity), true
+
+	case "SimpleProduct.redirect_code":
+		if e.ComplexityRoot.SimpleProduct.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SimpleProduct.RedirectCode(childComplexity), true
+	case "SimpleProduct.relative_url":
+		if e.ComplexityRoot.SimpleProduct.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SimpleProduct.RelativeURL(childComplexity), true
+	case "SimpleProduct.type":
+		if e.ComplexityRoot.SimpleProduct.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SimpleProduct.Type(childComplexity), true
 
 	case "StoreConfig.autocomplete_on_storefront":
 		if e.ComplexityRoot.StoreConfig.AutocompleteOnStorefront == nil {
@@ -904,6 +1344,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.StoreConfig.Welcome(childComplexity), true
 
+	case "VirtualProduct.redirect_code":
+		if e.ComplexityRoot.VirtualProduct.RedirectCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.VirtualProduct.RedirectCode(childComplexity), true
+	case "VirtualProduct.relative_url":
+		if e.ComplexityRoot.VirtualProduct.RelativeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.VirtualProduct.RelativeURL(childComplexity), true
+	case "VirtualProduct.type":
+		if e.ComplexityRoot.VirtualProduct.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.VirtualProduct.Type(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -1078,6 +1537,39 @@ func (ec *executionContext) field_Query_country_args(ctx context.Context, rawArg
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_recaptchaFormConfig_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "formType", ec.unmarshalNReCaptchaFormEnum2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaFormEnum)
+	if err != nil {
+		return nil, err
+	}
+	args["formType"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_route_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "url", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["url"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_urlResolver_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "url", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["url"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Directive_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1129,6 +1621,209 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _BundleProduct_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.BundleProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BundleProduct_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BundleProduct_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BundleProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BundleProduct_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.BundleProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BundleProduct_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BundleProduct_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BundleProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BundleProduct_type(ctx context.Context, field graphql.CollectedField, obj *model.BundleProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BundleProduct_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_BundleProduct_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BundleProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CategoryTree_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.CategoryTree) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CategoryTree_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CategoryTree_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CategoryTree",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CategoryTree_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.CategoryTree) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CategoryTree_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CategoryTree_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CategoryTree",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CategoryTree_type(ctx context.Context, field graphql.CollectedField, obj *model.CategoryTree) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CategoryTree_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CategoryTree_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CategoryTree",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CategoryTree_uid(ctx context.Context, field graphql.CollectedField, obj *model.CategoryTree) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CategoryTree_uid,
+		func(ctx context.Context) (any, error) {
+			return obj.UID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CategoryTree_uid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CategoryTree",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _CmsBlock_identifier(ctx context.Context, field graphql.CollectedField, obj *model.CmsBlock) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -1510,6 +2205,180 @@ func (ec *executionContext) fieldContext_CmsPage_meta_keywords(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CmsPage_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.CmsPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CmsPage_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CmsPage_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CmsPage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CmsPage_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.CmsPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CmsPage_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CmsPage_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CmsPage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CmsPage_type(ctx context.Context, field graphql.CollectedField, obj *model.CmsPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CmsPage_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_CmsPage_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CmsPage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ConfigurableProduct_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.ConfigurableProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ConfigurableProduct_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ConfigurableProduct_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ConfigurableProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ConfigurableProduct_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.ConfigurableProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ConfigurableProduct_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ConfigurableProduct_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ConfigurableProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ConfigurableProduct_type(ctx context.Context, field graphql.CollectedField, obj *model.ConfigurableProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ConfigurableProduct_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ConfigurableProduct_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ConfigurableProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1906,6 +2775,267 @@ func (ec *executionContext) fieldContext_Currency_exchange_rates(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _DownloadableProduct_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.DownloadableProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DownloadableProduct_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_DownloadableProduct_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DownloadableProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DownloadableProduct_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.DownloadableProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DownloadableProduct_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DownloadableProduct_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DownloadableProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DownloadableProduct_type(ctx context.Context, field graphql.CollectedField, obj *model.DownloadableProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DownloadableProduct_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_DownloadableProduct_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DownloadableProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EntityUrl_id(ctx context.Context, field graphql.CollectedField, obj *model.EntityURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_EntityUrl_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_EntityUrl_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EntityUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EntityUrl_entity_uid(ctx context.Context, field graphql.CollectedField, obj *model.EntityURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_EntityUrl_entity_uid,
+		func(ctx context.Context) (any, error) {
+			return obj.EntityUID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_EntityUrl_entity_uid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EntityUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EntityUrl_canonical_url(ctx context.Context, field graphql.CollectedField, obj *model.EntityURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_EntityUrl_canonical_url,
+		func(ctx context.Context) (any, error) {
+			return obj.CanonicalURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_EntityUrl_canonical_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EntityUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EntityUrl_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.EntityURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_EntityUrl_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_EntityUrl_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EntityUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EntityUrl_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.EntityURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_EntityUrl_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_EntityUrl_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EntityUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EntityUrl_type(ctx context.Context, field graphql.CollectedField, obj *model.EntityURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_EntityUrl_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_EntityUrl_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EntityUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ExchangeRate_currency_to(ctx context.Context, field graphql.CollectedField, obj *model.ExchangeRate) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1959,6 +3089,93 @@ func (ec *executionContext) fieldContext_ExchangeRate_rate(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupedProduct_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.GroupedProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupedProduct_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupedProduct_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupedProduct_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.GroupedProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupedProduct_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupedProduct_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GroupedProduct_type(ctx context.Context, field graphql.CollectedField, obj *model.GroupedProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_GroupedProduct_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_GroupedProduct_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GroupedProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2551,6 +3768,12 @@ func (ec *executionContext) fieldContext_Query_cmsPage(ctx context.Context, fiel
 				return ec.fieldContext_CmsPage_meta_description(ctx, field)
 			case "meta_keywords":
 				return ec.fieldContext_CmsPage_meta_keywords(ctx, field)
+			case "relative_url":
+				return ec.fieldContext_CmsPage_relative_url(ctx, field)
+			case "redirect_code":
+				return ec.fieldContext_CmsPage_redirect_code(ctx, field)
+			case "type":
+				return ec.fieldContext_CmsPage_type(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CmsPage", field.Name)
 		},
@@ -2610,6 +3833,196 @@ func (ec *executionContext) fieldContext_Query_cmsBlocks(ctx context.Context, fi
 	if fc.Args, err = ec.field_Query_cmsBlocks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_route(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_route,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Route(ctx, fc.Args["url"].(string))
+		},
+		nil,
+		ec.marshalORoutableInterface2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐRoutableInterface,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_route(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_route_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_urlResolver(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_urlResolver,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().URLResolver(ctx, fc.Args["url"].(string))
+		},
+		nil,
+		ec.marshalOEntityUrl2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐEntityURL,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_urlResolver(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_EntityUrl_id(ctx, field)
+			case "entity_uid":
+				return ec.fieldContext_EntityUrl_entity_uid(ctx, field)
+			case "canonical_url":
+				return ec.fieldContext_EntityUrl_canonical_url(ctx, field)
+			case "relative_url":
+				return ec.fieldContext_EntityUrl_relative_url(ctx, field)
+			case "redirect_code":
+				return ec.fieldContext_EntityUrl_redirect_code(ctx, field)
+			case "type":
+				return ec.fieldContext_EntityUrl_type(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EntityUrl", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_urlResolver_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_recaptchaFormConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_recaptchaFormConfig,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RecaptchaFormConfig(ctx, fc.Args["formType"].(model.ReCaptchaFormEnum))
+		},
+		nil,
+		ec.marshalOReCaptchaConfigOutput2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaConfigOutput,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_recaptchaFormConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "is_enabled":
+				return ec.fieldContext_ReCaptchaConfigOutput_is_enabled(ctx, field)
+			case "configurations":
+				return ec.fieldContext_ReCaptchaConfigOutput_configurations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ReCaptchaConfigOutput", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_recaptchaFormConfig_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_recaptchaV3Config(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_recaptchaV3Config,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().RecaptchaV3Config(ctx)
+		},
+		nil,
+		ec.marshalOReCaptchaConfigurationV32ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaConfigurationV3,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_recaptchaV3Config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "is_enabled":
+				return ec.fieldContext_ReCaptchaConfigurationV3_is_enabled(ctx, field)
+			case "website_key":
+				return ec.fieldContext_ReCaptchaConfigurationV3_website_key(ctx, field)
+			case "minimum_score":
+				return ec.fieldContext_ReCaptchaConfigurationV3_minimum_score(ctx, field)
+			case "badge_position":
+				return ec.fieldContext_ReCaptchaConfigurationV3_badge_position(ctx, field)
+			case "language_code":
+				return ec.fieldContext_ReCaptchaConfigurationV3_language_code(ctx, field)
+			case "failure_message":
+				return ec.fieldContext_ReCaptchaConfigurationV3_failure_message(ctx, field)
+			case "forms":
+				return ec.fieldContext_ReCaptchaConfigurationV3_forms(ctx, field)
+			case "theme":
+				return ec.fieldContext_ReCaptchaConfigurationV3_theme(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ReCaptchaConfigurationV3", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -2722,6 +4135,546 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _ReCaptchaConfigOutput_is_enabled(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigOutput) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigOutput_is_enabled,
+		func(ctx context.Context) (any, error) {
+			return obj.IsEnabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigOutput_is_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigOutput_configurations(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigOutput) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigOutput_configurations,
+		func(ctx context.Context) (any, error) {
+			return obj.Configurations, nil
+		},
+		nil,
+		ec.marshalOReCaptchaConfiguration2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaConfiguration,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigOutput_configurations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "re_captcha_type":
+				return ec.fieldContext_ReCaptchaConfiguration_re_captcha_type(ctx, field)
+			case "website_key":
+				return ec.fieldContext_ReCaptchaConfiguration_website_key(ctx, field)
+			case "minimum_score":
+				return ec.fieldContext_ReCaptchaConfiguration_minimum_score(ctx, field)
+			case "badge_position":
+				return ec.fieldContext_ReCaptchaConfiguration_badge_position(ctx, field)
+			case "theme":
+				return ec.fieldContext_ReCaptchaConfiguration_theme(ctx, field)
+			case "language_code":
+				return ec.fieldContext_ReCaptchaConfiguration_language_code(ctx, field)
+			case "validation_failure_message":
+				return ec.fieldContext_ReCaptchaConfiguration_validation_failure_message(ctx, field)
+			case "technical_failure_message":
+				return ec.fieldContext_ReCaptchaConfiguration_technical_failure_message(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ReCaptchaConfiguration", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfiguration_re_captcha_type(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfiguration_re_captcha_type,
+		func(ctx context.Context) (any, error) {
+			return obj.ReCaptchaType, nil
+		},
+		nil,
+		ec.marshalNReCaptchaTypeEnum2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaTypeEnum,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfiguration_re_captcha_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ReCaptchaTypeEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfiguration_website_key(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfiguration_website_key,
+		func(ctx context.Context) (any, error) {
+			return obj.WebsiteKey, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfiguration_website_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfiguration_minimum_score(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfiguration_minimum_score,
+		func(ctx context.Context) (any, error) {
+			return obj.MinimumScore, nil
+		},
+		nil,
+		ec.marshalOFloat2ᚖfloat64,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfiguration_minimum_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfiguration_badge_position(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfiguration_badge_position,
+		func(ctx context.Context) (any, error) {
+			return obj.BadgePosition, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfiguration_badge_position(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfiguration_theme(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfiguration_theme,
+		func(ctx context.Context) (any, error) {
+			return obj.Theme, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfiguration_theme(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfiguration_language_code(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfiguration_language_code,
+		func(ctx context.Context) (any, error) {
+			return obj.LanguageCode, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfiguration_language_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfiguration_validation_failure_message(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfiguration_validation_failure_message,
+		func(ctx context.Context) (any, error) {
+			return obj.ValidationFailureMessage, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfiguration_validation_failure_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfiguration_technical_failure_message(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfiguration_technical_failure_message,
+		func(ctx context.Context) (any, error) {
+			return obj.TechnicalFailureMessage, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfiguration_technical_failure_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3_is_enabled(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigurationV3) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigurationV3_is_enabled,
+		func(ctx context.Context) (any, error) {
+			return obj.IsEnabled, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigurationV3_is_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigurationV3",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3_website_key(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigurationV3) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigurationV3_website_key,
+		func(ctx context.Context) (any, error) {
+			return obj.WebsiteKey, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigurationV3_website_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigurationV3",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3_minimum_score(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigurationV3) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigurationV3_minimum_score,
+		func(ctx context.Context) (any, error) {
+			return obj.MinimumScore, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigurationV3_minimum_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigurationV3",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3_badge_position(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigurationV3) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigurationV3_badge_position,
+		func(ctx context.Context) (any, error) {
+			return obj.BadgePosition, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigurationV3_badge_position(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigurationV3",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3_language_code(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigurationV3) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigurationV3_language_code,
+		func(ctx context.Context) (any, error) {
+			return obj.LanguageCode, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigurationV3_language_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigurationV3",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3_failure_message(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigurationV3) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigurationV3_failure_message,
+		func(ctx context.Context) (any, error) {
+			return obj.FailureMessage, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigurationV3_failure_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigurationV3",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3_forms(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigurationV3) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigurationV3_forms,
+		func(ctx context.Context) (any, error) {
+			return obj.Forms, nil
+		},
+		nil,
+		ec.marshalNReCaptchaFormEnum2ᚕgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaFormEnumᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigurationV3_forms(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigurationV3",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ReCaptchaFormEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3_theme(ctx context.Context, field graphql.CollectedField, obj *model.ReCaptchaConfigurationV3) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ReCaptchaConfigurationV3_theme,
+		func(ctx context.Context) (any, error) {
+			return obj.Theme, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ReCaptchaConfigurationV3_theme(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReCaptchaConfigurationV3",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Region_id(ctx context.Context, field graphql.CollectedField, obj *model.Region) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2804,6 +4757,180 @@ func (ec *executionContext) fieldContext_Region_name(_ context.Context, field gr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoutableUrl_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.RoutableURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RoutableUrl_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RoutableUrl_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoutableUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoutableUrl_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.RoutableURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RoutableUrl_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RoutableUrl_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoutableUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoutableUrl_type(ctx context.Context, field graphql.CollectedField, obj *model.RoutableURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RoutableUrl_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RoutableUrl_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoutableUrl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SimpleProduct_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.SimpleProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SimpleProduct_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SimpleProduct_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SimpleProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SimpleProduct_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.SimpleProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SimpleProduct_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SimpleProduct_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SimpleProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SimpleProduct_type(ctx context.Context, field graphql.CollectedField, obj *model.SimpleProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SimpleProduct_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SimpleProduct_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SimpleProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4868,6 +6995,93 @@ func (ec *executionContext) fieldContext_StoreConfig_contact_enabled(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _VirtualProduct_relative_url(ctx context.Context, field graphql.CollectedField, obj *model.VirtualProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VirtualProduct_relative_url,
+		func(ctx context.Context) (any, error) {
+			return obj.RelativeURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_VirtualProduct_relative_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VirtualProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VirtualProduct_redirect_code(ctx context.Context, field graphql.CollectedField, obj *model.VirtualProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VirtualProduct_redirect_code,
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VirtualProduct_redirect_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VirtualProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VirtualProduct_type(ctx context.Context, field graphql.CollectedField, obj *model.VirtualProduct) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VirtualProduct_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_VirtualProduct_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VirtualProduct",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UrlRewriteEntityTypeEnum does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6369,9 +8583,173 @@ func (ec *executionContext) unmarshalInputContactUsInput(ctx context.Context, ob
 
 // region    ************************** interface.gotpl ***************************
 
+func (ec *executionContext) _RoutableInterface(ctx context.Context, sel ast.SelectionSet, obj model.RoutableInterface) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.VirtualProduct:
+		return ec._VirtualProduct(ctx, sel, &obj)
+	case *model.VirtualProduct:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._VirtualProduct(ctx, sel, obj)
+	case model.SimpleProduct:
+		return ec._SimpleProduct(ctx, sel, &obj)
+	case *model.SimpleProduct:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SimpleProduct(ctx, sel, obj)
+	case model.RoutableURL:
+		return ec._RoutableUrl(ctx, sel, &obj)
+	case *model.RoutableURL:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._RoutableUrl(ctx, sel, obj)
+	case model.GroupedProduct:
+		return ec._GroupedProduct(ctx, sel, &obj)
+	case *model.GroupedProduct:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._GroupedProduct(ctx, sel, obj)
+	case model.DownloadableProduct:
+		return ec._DownloadableProduct(ctx, sel, &obj)
+	case *model.DownloadableProduct:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DownloadableProduct(ctx, sel, obj)
+	case model.ConfigurableProduct:
+		return ec._ConfigurableProduct(ctx, sel, &obj)
+	case *model.ConfigurableProduct:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ConfigurableProduct(ctx, sel, obj)
+	case model.CmsPage:
+		return ec._CmsPage(ctx, sel, &obj)
+	case *model.CmsPage:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._CmsPage(ctx, sel, obj)
+	case model.CategoryTree:
+		return ec._CategoryTree(ctx, sel, &obj)
+	case *model.CategoryTree:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._CategoryTree(ctx, sel, obj)
+	case model.BundleProduct:
+		return ec._BundleProduct(ctx, sel, &obj)
+	case *model.BundleProduct:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._BundleProduct(ctx, sel, obj)
+	default:
+		if typedObj, ok := obj.(graphql.Marshaler); ok {
+			return typedObj
+		} else {
+			panic(fmt.Errorf("unexpected type %T; non-generated variants of RoutableInterface must implement graphql.Marshaler", obj))
+		}
+	}
+}
+
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var bundleProductImplementors = []string{"BundleProduct", "RoutableInterface"}
+
+func (ec *executionContext) _BundleProduct(ctx context.Context, sel ast.SelectionSet, obj *model.BundleProduct) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bundleProductImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BundleProduct")
+		case "relative_url":
+			out.Values[i] = ec._BundleProduct_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._BundleProduct_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._BundleProduct_type(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var categoryTreeImplementors = []string{"CategoryTree", "RoutableInterface"}
+
+func (ec *executionContext) _CategoryTree(ctx context.Context, sel ast.SelectionSet, obj *model.CategoryTree) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, categoryTreeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CategoryTree")
+		case "relative_url":
+			out.Values[i] = ec._CategoryTree_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._CategoryTree_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._CategoryTree_type(ctx, field, obj)
+		case "uid":
+			out.Values[i] = ec._CategoryTree_uid(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var cmsBlockImplementors = []string{"CmsBlock"}
 
@@ -6449,7 +8827,7 @@ func (ec *executionContext) _CmsBlocks(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
-var cmsPageImplementors = []string{"CmsPage"}
+var cmsPageImplementors = []string{"CmsPage", "RoutableInterface"}
 
 func (ec *executionContext) _CmsPage(ctx context.Context, sel ast.SelectionSet, obj *model.CmsPage) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, cmsPageImplementors)
@@ -6478,6 +8856,58 @@ func (ec *executionContext) _CmsPage(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._CmsPage_meta_description(ctx, field, obj)
 		case "meta_keywords":
 			out.Values[i] = ec._CmsPage_meta_keywords(ctx, field, obj)
+		case "relative_url":
+			out.Values[i] = ec._CmsPage_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._CmsPage_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._CmsPage_type(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var configurableProductImplementors = []string{"ConfigurableProduct", "RoutableInterface"}
+
+func (ec *executionContext) _ConfigurableProduct(ctx context.Context, sel ast.SelectionSet, obj *model.ConfigurableProduct) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, configurableProductImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ConfigurableProduct")
+		case "relative_url":
+			out.Values[i] = ec._ConfigurableProduct_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._ConfigurableProduct_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._ConfigurableProduct_type(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6632,6 +9062,95 @@ func (ec *executionContext) _Currency(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var downloadableProductImplementors = []string{"DownloadableProduct", "RoutableInterface"}
+
+func (ec *executionContext) _DownloadableProduct(ctx context.Context, sel ast.SelectionSet, obj *model.DownloadableProduct) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, downloadableProductImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DownloadableProduct")
+		case "relative_url":
+			out.Values[i] = ec._DownloadableProduct_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._DownloadableProduct_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._DownloadableProduct_type(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var entityUrlImplementors = []string{"EntityUrl"}
+
+func (ec *executionContext) _EntityUrl(ctx context.Context, sel ast.SelectionSet, obj *model.EntityURL) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, entityUrlImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EntityUrl")
+		case "id":
+			out.Values[i] = ec._EntityUrl_id(ctx, field, obj)
+		case "entity_uid":
+			out.Values[i] = ec._EntityUrl_entity_uid(ctx, field, obj)
+		case "canonical_url":
+			out.Values[i] = ec._EntityUrl_canonical_url(ctx, field, obj)
+		case "relative_url":
+			out.Values[i] = ec._EntityUrl_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._EntityUrl_redirect_code(ctx, field, obj)
+		case "type":
+			out.Values[i] = ec._EntityUrl_type(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var exchangeRateImplementors = []string{"ExchangeRate"}
 
 func (ec *executionContext) _ExchangeRate(ctx context.Context, sel ast.SelectionSet, obj *model.ExchangeRate) graphql.Marshaler {
@@ -6647,6 +9166,49 @@ func (ec *executionContext) _ExchangeRate(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._ExchangeRate_currency_to(ctx, field, obj)
 		case "rate":
 			out.Values[i] = ec._ExchangeRate_rate(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var groupedProductImplementors = []string{"GroupedProduct", "RoutableInterface"}
+
+func (ec *executionContext) _GroupedProduct(ctx context.Context, sel ast.SelectionSet, obj *model.GroupedProduct) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, groupedProductImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GroupedProduct")
+		case "relative_url":
+			out.Values[i] = ec._GroupedProduct_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._GroupedProduct_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._GroupedProduct_type(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6868,6 +9430,82 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "route":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_route(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "urlResolver":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_urlResolver(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "recaptchaFormConfig":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_recaptchaFormConfig(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "recaptchaV3Config":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_recaptchaV3Config(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -6876,6 +9514,183 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var reCaptchaConfigOutputImplementors = []string{"ReCaptchaConfigOutput"}
+
+func (ec *executionContext) _ReCaptchaConfigOutput(ctx context.Context, sel ast.SelectionSet, obj *model.ReCaptchaConfigOutput) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, reCaptchaConfigOutputImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReCaptchaConfigOutput")
+		case "is_enabled":
+			out.Values[i] = ec._ReCaptchaConfigOutput_is_enabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "configurations":
+			out.Values[i] = ec._ReCaptchaConfigOutput_configurations(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var reCaptchaConfigurationImplementors = []string{"ReCaptchaConfiguration"}
+
+func (ec *executionContext) _ReCaptchaConfiguration(ctx context.Context, sel ast.SelectionSet, obj *model.ReCaptchaConfiguration) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, reCaptchaConfigurationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReCaptchaConfiguration")
+		case "re_captcha_type":
+			out.Values[i] = ec._ReCaptchaConfiguration_re_captcha_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "website_key":
+			out.Values[i] = ec._ReCaptchaConfiguration_website_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minimum_score":
+			out.Values[i] = ec._ReCaptchaConfiguration_minimum_score(ctx, field, obj)
+		case "badge_position":
+			out.Values[i] = ec._ReCaptchaConfiguration_badge_position(ctx, field, obj)
+		case "theme":
+			out.Values[i] = ec._ReCaptchaConfiguration_theme(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "language_code":
+			out.Values[i] = ec._ReCaptchaConfiguration_language_code(ctx, field, obj)
+		case "validation_failure_message":
+			out.Values[i] = ec._ReCaptchaConfiguration_validation_failure_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "technical_failure_message":
+			out.Values[i] = ec._ReCaptchaConfiguration_technical_failure_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var reCaptchaConfigurationV3Implementors = []string{"ReCaptchaConfigurationV3"}
+
+func (ec *executionContext) _ReCaptchaConfigurationV3(ctx context.Context, sel ast.SelectionSet, obj *model.ReCaptchaConfigurationV3) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, reCaptchaConfigurationV3Implementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReCaptchaConfigurationV3")
+		case "is_enabled":
+			out.Values[i] = ec._ReCaptchaConfigurationV3_is_enabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "website_key":
+			out.Values[i] = ec._ReCaptchaConfigurationV3_website_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minimum_score":
+			out.Values[i] = ec._ReCaptchaConfigurationV3_minimum_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "badge_position":
+			out.Values[i] = ec._ReCaptchaConfigurationV3_badge_position(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "language_code":
+			out.Values[i] = ec._ReCaptchaConfigurationV3_language_code(ctx, field, obj)
+		case "failure_message":
+			out.Values[i] = ec._ReCaptchaConfigurationV3_failure_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "forms":
+			out.Values[i] = ec._ReCaptchaConfigurationV3_forms(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "theme":
+			out.Values[i] = ec._ReCaptchaConfigurationV3_theme(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6916,6 +9731,92 @@ func (ec *executionContext) _Region(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Region_code(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Region_name(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var routableUrlImplementors = []string{"RoutableUrl", "RoutableInterface"}
+
+func (ec *executionContext) _RoutableUrl(ctx context.Context, sel ast.SelectionSet, obj *model.RoutableURL) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, routableUrlImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoutableUrl")
+		case "relative_url":
+			out.Values[i] = ec._RoutableUrl_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._RoutableUrl_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._RoutableUrl_type(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var simpleProductImplementors = []string{"SimpleProduct", "RoutableInterface"}
+
+func (ec *executionContext) _SimpleProduct(ctx context.Context, sel ast.SelectionSet, obj *model.SimpleProduct) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, simpleProductImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SimpleProduct")
+		case "relative_url":
+			out.Values[i] = ec._SimpleProduct_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._SimpleProduct_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._SimpleProduct_type(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7098,6 +9999,49 @@ func (ec *executionContext) _StoreConfig(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var virtualProductImplementors = []string{"VirtualProduct", "RoutableInterface"}
+
+func (ec *executionContext) _VirtualProduct(ctx context.Context, sel ast.SelectionSet, obj *model.VirtualProduct) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, virtualProductImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("VirtualProduct")
+		case "relative_url":
+			out.Values[i] = ec._VirtualProduct_relative_url(ctx, field, obj)
+		case "redirect_code":
+			out.Values[i] = ec._VirtualProduct_redirect_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._VirtualProduct_type(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7477,6 +10421,89 @@ func (ec *executionContext) unmarshalNContactUsInput2githubᚗcomᚋmagendooro�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNReCaptchaFormEnum2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaFormEnum(ctx context.Context, v any) (model.ReCaptchaFormEnum, error) {
+	var res model.ReCaptchaFormEnum
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNReCaptchaFormEnum2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaFormEnum(ctx context.Context, sel ast.SelectionSet, v model.ReCaptchaFormEnum) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNReCaptchaFormEnum2ᚕgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaFormEnumᚄ(ctx context.Context, v any) ([]model.ReCaptchaFormEnum, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]model.ReCaptchaFormEnum, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNReCaptchaFormEnum2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaFormEnum(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNReCaptchaFormEnum2ᚕgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaFormEnumᚄ(ctx context.Context, sel ast.SelectionSet, v []model.ReCaptchaFormEnum) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNReCaptchaFormEnum2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaFormEnum(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNReCaptchaTypeEnum2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaTypeEnum(ctx context.Context, v any) (model.ReCaptchaTypeEnum, error) {
+	var res model.ReCaptchaTypeEnum
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNReCaptchaTypeEnum2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaTypeEnum(ctx context.Context, sel ast.SelectionSet, v model.ReCaptchaTypeEnum) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7732,6 +10759,13 @@ func (ec *executionContext) marshalOCurrency2ᚖgithubᚗcomᚋmagendooroᚋmage
 	return ec._Currency(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOEntityUrl2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐEntityURL(ctx context.Context, sel ast.SelectionSet, v *model.EntityURL) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EntityUrl(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOExchangeRate2ᚕᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐExchangeRate(ctx context.Context, sel ast.SelectionSet, v []*model.ExchangeRate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -7805,6 +10839,27 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
+func (ec *executionContext) marshalOReCaptchaConfigOutput2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaConfigOutput(ctx context.Context, sel ast.SelectionSet, v *model.ReCaptchaConfigOutput) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ReCaptchaConfigOutput(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOReCaptchaConfiguration2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaConfiguration(ctx context.Context, sel ast.SelectionSet, v *model.ReCaptchaConfiguration) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ReCaptchaConfiguration(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOReCaptchaConfigurationV32ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐReCaptchaConfigurationV3(ctx context.Context, sel ast.SelectionSet, v *model.ReCaptchaConfigurationV3) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ReCaptchaConfigurationV3(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalORegion2ᚕᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐRegion(ctx context.Context, sel ast.SelectionSet, v []*model.Region) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -7823,6 +10878,13 @@ func (ec *executionContext) marshalORegion2ᚖgithubᚗcomᚋmagendooroᚋmagent
 		return graphql.Null
 	}
 	return ec._Region(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORoutableInterface2githubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐRoutableInterface(ctx context.Context, sel ast.SelectionSet, v model.RoutableInterface) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RoutableInterface(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOStoreConfig2ᚕᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐStoreConfig(ctx context.Context, sel ast.SelectionSet, v []*model.StoreConfig) graphql.Marshaler {
@@ -7891,6 +10953,22 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum(ctx context.Context, v any) (*model.URLRewriteEntityTypeEnum, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.URLRewriteEntityTypeEnum)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUrlRewriteEntityTypeEnum2ᚖgithubᚗcomᚋmagendooroᚋmagento2ᚑstoreᚑgraphqlᚑgoᚋgraphᚋmodelᚐURLRewriteEntityTypeEnum(ctx context.Context, sel ast.SelectionSet, v *model.URLRewriteEntityTypeEnum) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
