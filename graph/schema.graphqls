@@ -1,0 +1,180 @@
+# Magento 2 Store / Directory / CMS GraphQL Schema
+
+type Query {
+  storeConfig: StoreConfig
+  availableStores(useCurrentGroup: Boolean): [StoreConfig]
+  countries: [Country]
+  country(id: String): Country
+  currency: Currency
+  cmsPage(id: Int, identifier: String): CmsPage
+  cmsBlocks(identifiers: [String]): CmsBlocks
+}
+
+type Mutation {
+  contactUs(input: ContactUsInput!): ContactUsOutput
+}
+
+# ─── Store Config ─────────────────────────────────────────────────────────────
+
+type StoreConfig {
+  # Identity (from store/store_group/store_website tables)
+  id: Int
+  code: String
+  store_code: ID
+  store_name: String
+  store_sort_order: Int
+  is_default_store: Boolean
+  store_group_code: ID
+  store_group_name: String
+  is_default_store_group: Boolean
+  store_group_default_store_code: String
+  website_id: Int
+  website_code: ID
+  website_name: String
+
+  # Locale / timezone
+  locale: String
+  timezone: String
+  weight_unit: String
+
+  # Currency
+  base_currency_code: String
+  default_display_currency_code: String
+
+  # URLs
+  base_url: String
+  base_link_url: String
+  base_static_url: String
+  base_media_url: String
+  secure_base_url: String
+  secure_base_link_url: String
+  secure_base_static_url: String
+  secure_base_media_url: String
+  use_store_in_url: Boolean
+
+  # Country / region config
+  default_country: String
+  countries_with_required_region: String
+  optional_zip_countries: String
+  display_state_if_optional: Boolean
+
+  # Theme / design
+  default_title: String
+  title_prefix: String
+  title_suffix: String
+  default_description: String
+  default_keywords: String
+  head_shortcut_icon: String
+  header_logo_src: String
+  logo_width: Int
+  logo_height: Int
+  logo_alt: String
+  welcome: String
+  copyright: String
+  demonotice: Int
+
+  # Catalog
+  product_url_suffix: String
+  category_url_suffix: String
+  title_separator: String
+  list_mode: String
+  grid_per_page_values: String
+  list_per_page_values: String
+  grid_per_page: Int
+  list_per_page: Int
+  catalog_default_sort_by: String
+
+  # CMS
+  front: String
+  cms_home_page: String
+  no_route: String
+  cms_no_route: String
+  cms_no_cookies: String
+  show_cms_breadcrumbs: Int
+
+  # Checkout
+  is_guest_checkout_enabled: Boolean
+  is_one_page_checkout_enabled: Boolean
+  max_items_in_order_summary: Int
+  minicart_display: Boolean
+  minicart_max_items: Int
+  cart_expires_in_days: Int
+  is_checkout_agreements_enabled: Boolean!
+
+  # Customer
+  minimum_password_length: String
+  required_character_classes_number: String
+  autocomplete_on_storefront: Boolean
+  create_account_confirmation: Boolean
+
+  # Contact
+  contact_enabled: Boolean!
+}
+
+# ─── Directory ────────────────────────────────────────────────────────────────
+
+type Country {
+  id: String
+  two_letter_abbreviation: String
+  three_letter_abbreviation: String
+  full_name_locale: String
+  full_name_english: String
+  available_regions: [Region]
+}
+
+type Region {
+  id: Int
+  code: String
+  name: String
+}
+
+type Currency {
+  base_currency_code: String
+  base_currency_symbol: String
+  default_display_currency_code: String
+  default_display_currency_symbol: String
+  available_currency_codes: [String]
+  exchange_rates: [ExchangeRate]
+}
+
+type ExchangeRate {
+  currency_to: String
+  rate: Float
+}
+
+# ─── CMS ──────────────────────────────────────────────────────────────────────
+
+type CmsPage {
+  identifier: String
+  url_key: String
+  title: String
+  content: String
+  content_heading: String
+  page_layout: String
+  meta_title: String
+  meta_description: String
+  meta_keywords: String
+}
+
+type CmsBlocks {
+  items: [CmsBlock]
+}
+
+type CmsBlock {
+  identifier: String
+  title: String
+  content: String
+}
+
+# ─── Contact ──────────────────────────────────────────────────────────────────
+
+input ContactUsInput {
+  email: String!
+  name: String!
+  telephone: String
+  comment: String!
+}
+
+type ContactUsOutput {
+  status: Boolean!
+}
